@@ -1,0 +1,269 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Memory Services (Short-term, Episodic, Semantic, Long-Term, Procedural)
+
+Globals:
+  Function:
+    Timeout: 600
+    Runtime: python3.12
+    MemorySize: 512
+
+Resources:
+
+  # 1️ Short-Term Memory Lambda
+  ShortTermMemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: handlers.shortterm_handler.lambda_handler
+      Timeout: 30
+      Environment:
+        Variables:
+          REDIS_URL: "paste yours here"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /memories/shortterm
+            Method: ANY
+            Auth:
+              DefaultAuthorizer: NONE
+
+  # 2️⃣ Episodic Memory Lambda (S3-based)
+  EpisodicMemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: handlers.episodic_handler.lambda_handler
+      Timeout: 60
+      Environment:
+        Variables:
+          S3_BUCKET: "episodic-memory-bucket"
+          EPISODIC_INDEX_TABLE: "EpisodicIndex"  
+
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+                - s3:ListBucket
+                - dynamodb:PutItem
+                - dynamodb:GetItem
+                - dynamodb:Query
+              Resource:
+                - arn:aws:s3:::episodic-memory-bucket
+                - arn:aws:s3:::episodic-memory-bucket/*
+                - arn:aws:dynamodb:*:*:table/EpisodicIndex
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /memories/episodic
+            Method: ANY
+            Auth:
+              DefaultAuthorizer: NONE
+
+  # 3️⃣ Semantic Memory Lambda (OpenSearch-based)
+  SemanticMemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: handlers.semantic_handler.lambda_handler
+      Runtime: python3.12
+      Timeout: 60
+      Environment:
+        Variables:
+          OPENSEARCH_ENDPOINT: "your endpoint here"
+      Layers:
+        - arn:aws:lambda:us-east-1:xxxxxx:layer:semantic-layer:2
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: "es:*"
+              Resource:
+                - arn:aws:es:us-east-1:xxxxxxx:domain/semanticmemory#paste yours
+                - arn:aws:es:us-east-1:xxxxxxx:domain/semanticmemory/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /memories/semantic
+            Method: ANY
+            Auth:
+              DefaultAuthorizer: NONE
+
+
+  # 4️ Long-Term Memory Table
+  LongTermMemoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: LongTermMemoryTable
+      AttributeDefinitions:
+        - AttributeName: entity_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: entity_id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TableClass: STANDARD
+      SSESpecification:
+        SSEEnabled: true
+
+  # 5️Procedural Memory Table
+
+  ProceduralMemoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ProceduralMemoryTable
+      AttributeDefinitions:
+        - AttributeName: procedure_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: procedure_id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TableClass: STANDARD
+      SSESpecification:
+        SSEEnabled: true
+
+  # 6️⃣ Long-Term Memory Lambda + Role
+
+  LongTermMemoryFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: LongTermMemoryDynamoDBPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/LongTermMemoryTable
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/LongTermMemoryTable/*
+
+  LongTermMemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: handlers.longterm_handler.lambda_handler
+      Timeout: 60
+      Environment:
+        Variables:
+          LONGTERM_MEMORY_TABLE: "LongTermMemoryTable"
+      Role: !GetAtt LongTermMemoryFunctionRole.Arn
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /memories/longterm
+            Method: ANY
+            Auth:
+              DefaultAuthorizer: NONE
+
+  # 7️Procedural Memory Lambda + Role
+
+  ProceduralMemoryFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ProceduralMemoryDynamoDBPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ProceduralMemoryTable
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ProceduralMemoryTable/*
+
+  ProceduralMemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: handlers.procedural_handler.lambda_handler
+      Timeout: 60
+      Environment:
+        Variables:
+          PROCEDURAL_MEMORY_TABLE: "ProceduralMemoryTable"
+      Role: !GetAtt ProceduralMemoryFunctionRole.Arn
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /memories/procedural
+            Method: ANY
+            Auth:
+              DefaultAuthorizer: NONE
+  # Working Memory Lambda Function
+  WorkingMemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: WorkingMemoryFunction
+      CodeUri: .
+      Handler: handlers.working_handler.lambda_handler  # your FastAPI app entry via Mangum
+      Environment:
+        Variables:
+          REDIS_URL: "paste yours here"
+      Policies:
+        - AWSLambdaBasicExecutionRole  # grants CloudWatch logs
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /working_memory
+            Method: ANY
+            Auth:
+              DefaultAuthorizer: NONE
+
+Outputs:
+  ShortTermMemoryApiUrl:
+    Description: API Gateway endpoint URL for Short-Term Memory
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/memories/shortterm"
+  EpisodicMemoryApiUrl:
+    Description: API Gateway endpoint URL for Episodic Memory
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/memories/episodic"
+  SemanticMemoryApiUrl:
+    Description: API Gateway endpoint URL for Semantic Memory
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/memories/semantic"
+  LongTermMemoryApiUrl:
+    Description: API Gateway endpoint URL for Long-Term Memory
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/memories/longterm"
+  ProceduralMemoryApiUrl:
+    Description: API Gateway endpoint URL for Procedural Memory
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/memories/procedural"
+  WorkingMemoryApiUrl:
+    Description: API Gateway endpoint URL for Working Memory
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/working_memory"

@@ -1,0 +1,8 @@
+PyJWT
+redis
+boto3
+pydantic
+python-dotenv
+requests
+fastapi
+mangum

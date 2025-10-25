@@ -1,0 +1,11 @@
+.venv/
+.env
+.aws-sam/
+
+-__pycache__/
+-*.py[cod]
+python/
+*.zip
+dist/
+urllib3/
+six
