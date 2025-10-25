@@ -96,9 +96,9 @@ class WorkingMemoryHandler:
         logger.info(f"Cleared working memory: {memory_id} | Tenant: {self.tenant_id}")
 
 
-# =========================
+
 # Lambda Handler Entry Point
-# =========================
+
 def lambda_handler(event, context):
     try:
         http_method = event.get("httpMethod", "").upper()

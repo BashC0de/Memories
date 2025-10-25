@@ -18,9 +18,9 @@ from mangum import Mangum
 
 from pydantic import BaseModel
 from typing import List, Optional
-# ==================================================
+
 # PATH FIXES FOR LOCAL & LAMBDA IMPORTS
-# ==================================================
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(CURRENT_DIR)
 sys.path.append(os.path.join(CURRENT_DIR, "handlers"))
@@ -28,9 +28,9 @@ sys.path.append(os.path.join(CURRENT_DIR, "services"))
 sys.path.append(os.path.join(CURRENT_DIR, "utils"))
 sys.path.append(os.path.join(CURRENT_DIR, "..", "..", "shared"))
 
-# ==================================================
+
 # IMPORT HANDLERS AND UTILITIES
-# ==================================================
+
 from handlers.shortterm_handler import ShorttermMemoryHandler
 from handlers.episodic_handler import EpisodicMemoryHandler
 from handlers.semantic_handler import SemanticMemoryHandler
@@ -50,14 +50,14 @@ from models import ShorttermMemoryCreate, ShorttermMemoryRequest
 from models import EpisodicMemoryCreate, EpisodicMemoryResponse 
 from models import ProcedureCreate, ProcedureResponse
 
-# ==================================================
+
 # APP INITIALIZATION
-# ==================================================
+
 app = FastAPI(title="Unified Memory API", version="1.0.0")
 
-# ==================================================
+
 # SHORT-TERM MEMORY ENDPOINTS
-# ==================================================
+
 redis_endpoint = os.environ.get("REDIS_SHORTTERM_ENDPOINT")
 if not redis_endpoint:
     raise RuntimeError("REDIS_SHORTTERM_ENDPOINT is not set in environment variables")
@@ -93,9 +93,9 @@ def get_shortterm_memory_by_id(memory_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ==================================================
+
 # EPISODIC MEMORY ENDPOINTS
-# ==================================================
+
 class EpisodicMemoryRequest(BaseModel):
     session_id: str
     turn_number: int
@@ -141,9 +141,9 @@ def query_episodic_memories(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ==================================================
+
 # SEMANTIC MEMORY ENDPOINTS
-# ==================================================
+
 class AddMemoryResponse(BaseModel):
     memory_id: str
     timestamp: str
@@ -241,9 +241,9 @@ async def query_semantic_memory(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
-# ==================================================
+
 # LONG-TERM MEMORY ENDPOINTS
-# ==================================================
+
 class AddLongTermMemoryRequest(BaseModel):
     entity_id: str
     summary: str
@@ -396,14 +396,14 @@ async def clear_working_memory(request: Request, memory_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
-# ==================================================
+
 # MANGUM HANDLER (for AWS Lambda)
-# ==================================================
+
 handler = Mangum(app)
 
-# ==================================================
+
 # LOCAL DEBUG ENTRYPOINT
-# ==================================================
+
 if __name__ == "__main__":
     import uvicorn
     logging.basicConfig(level=logging.INFO)

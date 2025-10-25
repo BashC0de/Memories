@@ -18,9 +18,9 @@ from utils import setup_logging, create_response, create_error_response, extract
 
 logger = setup_logging()
 
-# ============================
+
 # Long-Term Memory Handler
-# ============================
+
 class LongTermMemoryHandler:
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
@@ -119,9 +119,9 @@ class LongTermMemoryHandler:
                 "message": str(e)
             }
 
-# ============================
+
 # Lambda Handler
-# ============================
+
 @measure_execution_time
 def lambda_handler(event, context):
     """

@@ -149,9 +149,3 @@ def handle_query_memory(event, adapter: OpenSearchAdapter):
     return create_response(200, {"count": len(results), "results": results})
 
 
-# -----------------------------------------------------------------------------
-# ✅ Ready for AWS SAM deployment:
-# - Uses environment variable: OPENSEARCH_ENDPOINT
-# - Single Lambda for both add (POST) and query (GET)
-# - Fully compatible with template.yaml configuration
-# -----------------------------------------------------------------------------

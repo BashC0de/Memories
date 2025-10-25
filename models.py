@@ -17,10 +17,6 @@ class MemoryEntryBase(BaseModel):
         """Convert the Pydantic model to a Python dict."""
         return self.dict()
 
-# class MemoryEntryBase(BaseModel):
-#     tenant_id: str = Field(..., description="The ID of the tenant owning the memory.")
-#     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Optional metadata for the memory entry.")
-
 # --- Episodic Memory ---
 
 class EpisodicMemoryCreate(MemoryEntryBase):
@@ -89,20 +85,6 @@ class WorkingMemoryResponse(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
     context: Optional[str] = Field("", description="Optional context")
 
-
-# class WorkingMemoryBase(BaseModel):
-#     content: str = Field(..., description="The content of the working memory")
-#     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Optional metadata")
-#     ttl_seconds: Optional[int] = Field(3600, description="Time-to-live in seconds")
-#     context: Optional[str] = Field("", description="Context or session identifier")
-    
-# class WorkingMemoryCreate(MemoryEntryBase):
-#     session_id: str = Field(..., description="The session ID for the working memory.")
-#     data: Dict[str, Any] = Field(..., description="The current working data for the session.")
-
-# class WorkingMemoryResponse(WorkingMemoryCreate):
-#     timestamp: datetime
-#     ttl: Optional[int] = Field(default=None, description="Time-to-live for the memory entry in seconds.")
 
 # --- Long-Term Memory ---
 
